@@ -1,10 +1,13 @@
 import { spawn } from 'node:child_process';
+import { join } from 'node:path';
 
 const nodeOptions = [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning']
   .filter(Boolean)
   .join(' ');
 
-const child = spawn('node', ['backend/dist/server.js'], {
+const serverScript = join(process.cwd(), 'backend', 'dist', 'server.js');
+
+const child = spawn(process.execPath, [serverScript], {
   stdio: 'inherit',
   env: {
     ...process.env,

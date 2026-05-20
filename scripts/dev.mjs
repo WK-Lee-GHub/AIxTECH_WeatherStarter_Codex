@@ -1,12 +1,29 @@
 import { spawn } from 'node:child_process';
+import { join } from 'node:path';
 
 const nodeOptions = [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning']
   .filter(Boolean)
   .join(' ');
 
-const child = spawn(
+const portlessExecutable = join(
+  process.cwd(),
+  'node_modules',
   'portless',
-  ['run', '--name', 'weather-starter', 'tsx', 'watch', 'backend/src/server.ts'],
+  'dist',
+  'cli.js',
+);
+
+const child = spawn(
+  process.execPath,
+  [
+    portlessExecutable,
+    'run',
+    '--name',
+    'weather-starter',
+    'tsx',
+    'watch',
+    'backend/src/server.ts',
+  ],
   {
     stdio: 'inherit',
     env: {
