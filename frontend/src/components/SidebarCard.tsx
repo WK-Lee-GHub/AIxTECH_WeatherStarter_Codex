@@ -1,7 +1,7 @@
 import { useStore } from '../state/store';
 import { CloudIcon, HomeIcon } from './icons';
 import { formatTemperature, formatTime } from './format';
-import type { KeyboardEvent } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import type { Location } from '../types';
 
 interface SidebarCardProps {
@@ -10,7 +10,7 @@ interface SidebarCardProps {
 }
 
 export function SidebarCard({ location, isHome }: SidebarCardProps) {
-  const { selectedId, select } = useStore();
+  const { selectedId, select, deleteLocation } = useStore();
   const isSelected = selectedId === location.id;
   const observed = formatTime(location.weather.observed_at);
   const area =
@@ -21,6 +21,10 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
   const low = formatTemperature(location.weather.forecast_low_c);
 
   const onSelect = () => select(location.id);
+  const onDelete = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    await deleteLocation(location.id);
+  };
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
@@ -41,6 +45,14 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
           : 'border-white/10 bg-white/[0.07] hover:bg-white/[0.12]'
       }`}
     >
+      <button
+        type="button"
+        onClick={onDelete}
+        aria-label="Delete location"
+        className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/40 text-sm font-semibold text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+      >
+        ×
+      </button>
       <div className="flex items-start justify-between gap-3 px-4 pt-3">
         <div className="min-w-0">
           <div className="truncate text-lg font-semibold leading-tight text-white">{area}</div>
