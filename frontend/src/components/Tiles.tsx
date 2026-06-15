@@ -1,4 +1,4 @@
-import { CloudIcon, DropletIcon, SunIcon, ThermometerIcon, TrendIcon, WindIcon } from './icons';
+import { CloudIcon, DropletIcon, MoonIcon, SunIcon, ThermometerIcon, TrendIcon, WindIcon } from './icons';
 import type { ReactNode } from 'react';
 import type { WeatherSnapshot } from '../types';
 
@@ -62,6 +62,40 @@ function ScaleBar({ value, max, gradientClass }: ScaleBarProps) {
         />
       )}
     </div>
+  );
+}
+
+function conditionIcon(condition: string | null | undefined): ReactNode {
+  if (!condition) return <CloudIcon className="h-9 w-9" />;
+  const lower = condition.toLowerCase();
+  if (lower.includes('night')) return <MoonIcon className="h-9 w-9 text-blue-200/70" />;
+  if (lower.includes('fair') || lower.includes('sunny') || lower.includes('clear'))
+    return <SunIcon className="h-9 w-9 text-amber-300" />;
+  return <CloudIcon className="h-9 w-9" />;
+}
+
+export function ConditionTile({ weather }: WeatherProps) {
+  const condition = weather?.condition ?? '--';
+  const area = weather?.area;
+  const validPeriod = weather?.valid_period_text;
+
+  return (
+    <TileShell
+      icon={<CloudIcon className="h-3.5 w-3.5" />}
+      title="Condition"
+      className="col-span-2"
+    >
+      <div className="flex items-center gap-3">
+        {conditionIcon(weather?.condition)}
+        <div>
+          <div className="text-2xl font-light leading-tight text-white/95">{condition}</div>
+          {area && <div className="mt-0.5 text-sm text-white/70">{area}</div>}
+        </div>
+      </div>
+      {validPeriod && (
+        <p className="mt-3 text-xs leading-snug text-white/70">Valid {validPeriod} · 2-hr forecast</p>
+      )}
+    </TileShell>
   );
 }
 
@@ -247,6 +281,7 @@ export function AveragesTile({ weather }: WeatherProps) {
 export function TileGrid({ weather }: WeatherProps) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <ConditionTile weather={weather} />
       <AirQualityTile weather={weather} />
       <WindTile weather={weather} />
       <UVTile weather={weather} />
