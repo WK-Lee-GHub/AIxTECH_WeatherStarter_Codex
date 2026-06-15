@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { WeatherSnapshot } from '../weather.js';
 
 const weather: WeatherSnapshot = {
@@ -48,7 +48,14 @@ describe('locations API', () => {
   });
 
   afterAll(async () => {
+    const { closeStore } = await import('../db.js');
+    closeStore();
     await rm(tempDir, { recursive: true, force: true });
+  });
+
+  beforeEach(async () => {
+    const { resetStore } = await import('../db.js');
+    await resetStore();
   });
 
   it('refreshes weather when a location is created', async () => {
@@ -71,5 +78,22 @@ describe('locations API', () => {
     const listResponse = await request(app).get('/api/locations').expect(200);
     expect(listResponse.body.locations).toHaveLength(1);
     expect(listResponse.body.locations[0].weather.condition).toBe('Cloudy');
+  });
+
+  it('deletes a location', async () => {
+    const createResponse = await request(app)
+      .post('/api/locations')
+      .send({ latitude: 1.35, longitude: 103.85 })
+      .expect(201);
+
+    await request(app).delete(`/api/locations/${createResponse.body.id}`).expect(204);
+    await request(app).get(`/api/locations/${createResponse.body.id}`).expect(404);
+
+    const listResponse = await request(app).get('/api/locations').expect(200);
+    expect(listResponse.body.locations).toHaveLength(0);
+  });
+
+  it('returns not found when deleting a missing location', async () => {
+    await request(app).delete('/api/locations/999').expect(404);
   });
 });

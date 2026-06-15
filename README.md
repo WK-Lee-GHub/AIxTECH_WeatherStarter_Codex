@@ -62,13 +62,14 @@ npm run db:migrate  # Apply Drizzle migrations to backend/weather.db
 
 ## API
 
-| Method | Endpoint                     | Description                    |
-| ------ | ---------------------------- | ------------------------------ |
-| `GET`  | `/health`                    | Health check                   |
-| `GET`  | `/api/locations`             | List all locations             |
-| `POST` | `/api/locations`             | Create a location              |
-| `GET`  | `/api/locations/:id`         | Get a single location          |
-| `POST` | `/api/locations/:id/refresh` | Refresh weather for a location |
+| Method   | Endpoint                     | Description                    |
+| -------- | ---------------------------- | ------------------------------ |
+| `GET`    | `/health`                    | Health check                   |
+| `GET`    | `/api/locations`             | List all locations             |
+| `POST`   | `/api/locations`             | Create a location              |
+| `GET`    | `/api/locations/:id`         | Get a single location          |
+| `DELETE` | `/api/locations/:id`         | Delete a location              |
+| `POST`   | `/api/locations/:id/refresh` | Refresh weather for a location |
 
 Create a location:
 
@@ -158,9 +159,9 @@ npm run dev
 
 These tasks are ordered from easiest to hardest. Each one builds on the existing codebase and introduces new concepts progressively. File names may differ by implementation, but the product behavior should stay the same.
 
-### 1. Delete a location
+### 1. Delete a location (implemented)
 
-Add a `DELETE /api/locations/:id` endpoint and a delete button to each card in `SidebarCard.tsx`.
+Locations can be deleted through the `DELETE /api/locations/:id` endpoint and the cross button on each card in `SidebarCard.tsx`.
 
 | Layer    | What to do                              |
 | -------- | --------------------------------------- |

@@ -104,9 +104,21 @@ export async function updateWeather(
   return row ? rowToRecord(row) : null;
 }
 
+export async function deleteLocation(id: number): Promise<boolean> {
+  const existing = await getLocation(id);
+  if (!existing) return false;
+
+  await db.delete(locations).where(eq(locations.id, id)).run();
+  return true;
+}
+
 export async function resetStore(): Promise<void> {
   await db.delete(locations).run();
   sqlite.prepare("DELETE FROM sqlite_sequence WHERE name = 'locations'").run();
+}
+
+export function closeStore(): void {
+  sqlite.close();
 }
 
 function weatherToColumns(weather: WeatherSnapshot) {
