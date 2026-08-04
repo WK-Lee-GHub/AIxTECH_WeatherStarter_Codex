@@ -2,7 +2,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { closeDatabase, resetStore } from '../db.js';
 import type { WeatherSnapshot } from '../weather.js';
 
 const weather: WeatherSnapshot = {
@@ -47,7 +48,12 @@ describe('locations API', () => {
     });
   });
 
+  beforeEach(async () => {
+    await resetStore();
+  });
+
   afterAll(async () => {
+    closeDatabase();
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -58,18 +64,65 @@ describe('locations API', () => {
       .expect(201);
 
     expect(response.body).toMatchObject({
-      id: 1,
       latitude: 1.35,
       longitude: 103.85,
       weather: {
         condition: 'Cloudy',
         area: 'Bishan',
         temperature_c: 29,
+        humidity_percent: 80,
+        rainfall_mm: 0,
+        wind_speed_knots: 4,
+        wind_direction_degrees: 180,
+        uv_index: 7,
+        psi_twenty_four_hourly: 42,
+        pm25_one_hourly: 9,
+        air_quality_region: 'central',
+        forecast_periods: [{ label: 'Now', forecast: 'Cloudy' }],
+        daily_forecast: [
+          {
+            date: '2026-05-04',
+            forecast: 'Cloudy',
+            temperature_low_c: 25,
+            temperature_high_c: 32,
+          },
+        ],
       },
     });
 
     const listResponse = await request(app).get('/api/locations').expect(200);
     expect(listResponse.body.locations).toHaveLength(1);
-    expect(listResponse.body.locations[0].weather.condition).toBe('Cloudy');
+    expect(listResponse.body.locations[0].weather).toMatchObject({
+      condition: 'Cloudy',
+      humidity_percent: 80,
+      rainfall_mm: 0,
+      wind_speed_knots: 4,
+      wind_direction_degrees: 180,
+      uv_index: 7,
+      psi_twenty_four_hourly: 42,
+      pm25_one_hourly: 9,
+      air_quality_region: 'central',
+      forecast_periods: [{ label: 'Now', forecast: 'Cloudy' }],
+      daily_forecast: [
+        {
+          date: '2026-05-04',
+          forecast: 'Cloudy',
+          temperature_low_c: 25,
+          temperature_high_c: 32,
+        },
+      ],
+    });
+  });
+
+  it('deletes a created location', async () => {
+    const created = await request(app)
+      .post('/api/locations')
+      .send({ latitude: 1.35, longitude: 103.85 })
+      .expect(201);
+
+    await request(app).delete(`/api/locations/${created.body.id}`).expect(204);
+
+    const listResponse = await request(app).get('/api/locations').expect(200);
+    expect(listResponse.body.locations).toHaveLength(0);
   });
 });

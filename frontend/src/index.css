@@ -10,12 +10,89 @@ body,
 
 body {
   @apply text-white antialiased;
-  background:
+  background: var(--app-bg);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  transition: background 0.4s ease;
+}
+
+:root,
+[data-theme='apple'] {
+  --app-bg:
     radial-gradient(120% 80% at 70% 0%, rgba(255, 255, 255, 0.18) 0%, transparent 55%),
     radial-gradient(90% 70% at 10% 100%, rgba(80, 110, 150, 0.55) 0%, transparent 60%),
     linear-gradient(170deg, #6f8aa8 0%, #5a7591 35%, #4a627c 65%, #3c5066 100%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+}
+
+[data-theme='midnight-aurora'] {
+  --app-bg:
+    radial-gradient(55% 45% at 12% 8%, rgba(45, 212, 191, 0.3) 0%, transparent 60%),
+    radial-gradient(50% 42% at 88% 12%, rgba(216, 70, 239, 0.24) 0%, transparent 60%),
+    radial-gradient(70% 55% at 50% 105%, rgba(99, 102, 241, 0.3) 0%, transparent 65%),
+    linear-gradient(180deg, #05050f 0%, #0a0a1a 45%, #0c0c22 100%);
+}
+
+[data-theme='paper-forecast'] {
+  --app-bg:
+    radial-gradient(80% 60% at 80% 0%, rgba(255, 243, 224, 0.6) 0%, transparent 55%),
+    radial-gradient(60% 50% at 10% 100%, rgba(210, 180, 140, 0.35) 0%, transparent 60%),
+    linear-gradient(175deg, #fdf8f0 0%, #f5efe0 40%, #ede5d5 100%);
+}
+
+[data-theme='neo-brutalist'] {
+  --app-bg:
+    linear-gradient(180deg, #fffbeb 0%, #fef3c7 50%, #fde047 100%);
+}
+
+/* Shared "card" hook so themes can restyle every panel/tile/list-item at once. */
+.ws-card {
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme='midnight-aurora'] .ws-card {
+  background: linear-gradient(160deg, rgba(32, 28, 64, 0.55) 0%, rgba(8, 8, 22, 0.45) 100%);
+  border-color: rgba(168, 132, 255, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(129, 92, 255, 0.12) inset,
+    0 12px 30px -12px rgba(168, 85, 247, 0.35);
+}
+
+[data-theme='paper-forecast'] .ws-card {
+  background: #ffffff;
+  border-color: #d4c9b8;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[data-theme='neo-brutalist'] .ws-card {
+  background: #ffffff;
+  border: 3px solid #000000;
+  border-radius: 0;
+  box-shadow: 6px 6px 0 0 #000000;
+}
+
+/* Hook for the large hero temperature reading. */
+[data-theme='midnight-aurora'] .ws-hero-temp {
+  font-weight: 500;
+  text-shadow:
+    0 0 25px rgba(147, 197, 253, 0.55),
+    0 0 45px rgba(196, 132, 252, 0.4);
+}
+
+[data-theme='paper-forecast'] .ws-hero-temp {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+}
+
+[data-theme='neo-brutalist'] .ws-hero-temp {
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  font-weight: 900;
+  font-size: 7rem;
+  letter-spacing: -0.03em;
+  color: #000000;
+  text-transform: uppercase;
 }
 
 button,
@@ -26,6 +103,30 @@ input {
 button:focus-visible,
 input:focus-visible {
   @apply outline-none ring-2 ring-white/40 ring-offset-0;
+}
+
+[data-theme='paper-forecast'] button:focus-visible,
+[data-theme='paper-forecast'] input:focus-visible {
+  @apply ring-2 ring-black/30 ring-offset-1;
+}
+
+[data-theme='neo-brutalist'] button:focus-visible,
+[data-theme='neo-brutalist'] input:focus-visible {
+  @apply ring-2 ring-black ring-offset-2;
+}
+
+/* Neo-brutalist: force black text on light background */
+[data-theme='neo-brutalist'] {
+  color: #000000;
+}
+
+[data-theme='neo-brutalist'] .ws-card {
+  color: #000000;
+}
+
+[data-theme='neo-brutalist'] ::placeholder {
+  color: #000000;
+  opacity: 0.5;
 }
 
 ::-webkit-scrollbar {

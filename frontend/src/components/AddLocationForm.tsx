@@ -48,7 +48,7 @@ export function AddLocationForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="grid gap-2.5 rounded-2xl border border-white/15 bg-white/[0.1] p-3 backdrop-blur-xl"
+      className="ws-card grid gap-2.5 rounded-2xl border border-white/15 bg-white/[0.1] p-3 backdrop-blur-xl"
     >
       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
         New coordinate

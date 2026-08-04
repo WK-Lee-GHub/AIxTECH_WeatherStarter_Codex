@@ -47,7 +47,7 @@ export function Hero() {
             </div>
           )}
           <h1 className="text-4xl font-light leading-tight text-white">{area}</h1>
-          <div className="mt-2 text-[6.5rem] font-extralight leading-none tracking-tight text-white">
+          <div className="ws-hero-temp mt-2 text-[6.5rem] font-extralight leading-none tracking-tight text-white">
             {temperature}
           </div>
           <div className="mt-1 text-lg text-white/90">{condition}</div>

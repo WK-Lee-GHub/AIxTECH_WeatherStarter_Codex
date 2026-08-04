@@ -1,5 +1,5 @@
 import { useStore } from '../state/store';
-import { CloudIcon, HomeIcon } from './icons';
+import { CloudIcon, CloseIcon, HomeIcon } from './icons';
 import { formatTemperature, formatTime } from './format';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import type { Location } from '../types';
@@ -39,7 +39,7 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
       onClick={onSelect}
       onKeyDown={onKeyDown}
       aria-pressed={isSelected}
-      className={`relative w-full cursor-pointer overflow-hidden rounded-2xl border text-left backdrop-blur-xl transition ${
+      className={`ws-card relative w-full cursor-pointer overflow-hidden rounded-2xl border text-left backdrop-blur-xl transition ${
         isSelected
           ? 'border-white/30 bg-white/20 shadow-lg shadow-black/20'
           : 'border-white/10 bg-white/[0.07] hover:bg-white/[0.12]'
@@ -49,9 +49,9 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
         type="button"
         onClick={onDelete}
         aria-label="Delete location"
-        className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/40 text-sm font-semibold text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+        className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
       >
-        ×
+        <CloseIcon className="h-4 w-4" />
       </button>
       <div className="flex items-start justify-between gap-3 px-4 pt-3">
         <div className="min-w-0">

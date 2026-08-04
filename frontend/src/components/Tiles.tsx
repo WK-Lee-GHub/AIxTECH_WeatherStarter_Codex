@@ -16,7 +16,7 @@ interface TileShellProps {
 function TileShell({ icon, title, className = '', children }: TileShellProps) {
   return (
     <section
-      className={`flex flex-col gap-3 rounded-2xl border border-white/15 bg-white/[0.08] p-4 backdrop-blur-xl ${className}`}
+      className={`ws-card flex flex-col gap-3 rounded-2xl border border-white/15 bg-white/[0.08] p-4 backdrop-blur-xl ${className}`}
     >
       <header className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
         {icon}
@@ -202,6 +202,21 @@ export function TemperatureTile({ weather }: WeatherProps) {
   );
 }
 
+export function ConditionTile({ weather }: WeatherProps) {
+  const condition = weather?.condition || 'Unavailable';
+  const subtitle = weather?.valid_period_text || 'Latest 2-hour forecast';
+
+  return (
+    <TileShell icon={<CloudIcon className="h-3.5 w-3.5" />} title="Condition" className="col-span-2">
+      <div className="text-4xl font-light leading-none text-white/95">{condition}</div>
+      <div className="mt-1 text-base text-white/85">{subtitle}</div>
+      <p className="mt-3 text-xs leading-snug text-white/70">
+        Updated from the nearest 2-hour area forecast.
+      </p>
+    </TileShell>
+  );
+}
+
 export function PrecipitationTile({ weather }: WeatherProps) {
   return (
     <TileShell icon={<DropletIcon />} title="Rainfall">
@@ -248,6 +263,7 @@ export function TileGrid({ weather }: WeatherProps) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <AirQualityTile weather={weather} />
+      <ConditionTile weather={weather} />
       <WindTile weather={weather} />
       <UVTile weather={weather} />
       <TemperatureTile weather={weather} />
