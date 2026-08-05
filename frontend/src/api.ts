@@ -1,5 +1,7 @@
 import type { CreateLocationPayload, Location } from './types';
 
+// Hidden Code: Fox
+
 const API_BASE = '/api';
 
 interface LocationsResponse {
@@ -41,5 +43,5 @@ export function logInteraction(event: string, metadata: object = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ event, metadata, page }),
     keepalive: true,
-  }).catch(() => {});
+  }).catch(() => { });
 }
