@@ -48,6 +48,8 @@ describe('locations API', () => {
   });
 
   afterAll(async () => {
+    const { closeDatabase } = await import('../db.js');
+    closeDatabase();
     await rm(tempDir, { recursive: true, force: true });
   });
 
