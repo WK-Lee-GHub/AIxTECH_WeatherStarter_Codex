@@ -29,6 +29,7 @@ const weather: WeatherSnapshot = {
 describe('locations API', () => {
   let tempDir: string;
   let app: Awaited<ReturnType<typeof import('../server.js').createApp>>;
+  let currentWeather = weather;
 
   beforeAll(async () => {
     tempDir = await mkdtemp(join(tmpdir(), 'weather-starter-test-'));
@@ -41,7 +42,7 @@ describe('locations API', () => {
       enableRequestLogging: false,
       weatherClient: {
         async getCurrentWeather() {
-          return weather;
+          return currentWeather;
         },
       },
     });
@@ -67,11 +68,56 @@ describe('locations API', () => {
         condition: 'Cloudy',
         area: 'Bishan',
         temperature_c: 29,
+        psi_twenty_four_hourly: 42,
+        pm25_one_hourly: 9,
+        air_quality_region: 'central',
+        forecast_low_c: 25,
+        forecast_high_c: 32,
+        forecast_periods: [{ label: 'Now', forecast: 'Cloudy' }],
+        daily_forecast: [{
+          date: '2026-05-04',
+          forecast: 'Cloudy',
+          temperature_low_c: 25,
+          temperature_high_c: 32,
+        }],
       },
     });
 
     const listResponse = await request(app).get('/api/locations').expect(200);
     expect(listResponse.body.locations).toHaveLength(1);
     expect(listResponse.body.locations[0].weather.condition).toBe('Cloudy');
+    expect(listResponse.body.locations[0].weather).toMatchObject({
+      psi_twenty_four_hourly: 42,
+      pm25_one_hourly: 9,
+      air_quality_region: 'central',
+      forecast_low_c: 25,
+      forecast_high_c: 32,
+      forecast_periods: [{ label: 'Now', forecast: 'Cloudy' }],
+      daily_forecast: [{
+        date: '2026-05-04',
+        forecast: 'Cloudy',
+        temperature_low_c: 25,
+        temperature_high_c: 32,
+      }],
+    });
+
+    currentWeather = {
+      ...weather,
+      condition: 'Rain',
+      wind_speed_knots: null,
+      failed_metrics: ['wind-speed'],
+    };
+    const refreshResponse = await request(app).post('/api/locations/1/refresh').expect(200);
+    expect(refreshResponse.body.weather).toMatchObject({
+      condition: 'Rain',
+      wind_speed_knots: 4,
+      forecast_high_c: 32,
+      daily_forecast: weather.daily_forecast,
+    });
+
+    await request(app).delete('/api/locations/1').expect(204);
+    const afterDelete = await request(app).get('/api/locations').expect(200);
+    expect(afterDelete.body.locations).toHaveLength(0);
+    await request(app).delete('/api/locations/1').expect(404);
   });
 });

@@ -1,6 +1,7 @@
 import { CloudIcon, DropletIcon, SunIcon, ThermometerIcon, TrendIcon, WindIcon } from './icons';
 import type { ReactNode } from 'react';
 import type { WeatherSnapshot } from '../types';
+import { formatTime } from './format';
 
 interface WeatherProps {
   weather: WeatherSnapshot;
@@ -72,6 +73,47 @@ function airQualityLabel(psi: number | null | undefined): string {
   if (psi <= 200) return 'Unhealthy';
   if (psi <= 300) return 'Very Unhealthy';
   return 'Hazardous';
+}
+
+function isFairCondition(condition: string | null | undefined): boolean {
+  return condition?.toLowerCase().includes('fair') ?? false;
+}
+
+export function ConditionTile({ weather }: WeatherProps) {
+  const condition = weather.condition || 'Unavailable';
+  const isFair = isFairCondition(weather.condition);
+  const observed = formatTime(weather.observed_at);
+
+  return (
+    <TileShell
+      icon={isFair ? <SunIcon /> : <CloudIcon />}
+      title="Condition"
+      className="col-span-2"
+    >
+      <div className="flex items-center gap-4">
+        {isFair ? (
+          <SunIcon className="h-14 w-14 shrink-0 text-amber-300" />
+        ) : (
+          <CloudIcon className="h-14 w-14 shrink-0 text-white/85" />
+        )}
+        <div className="min-w-0">
+          <div className="truncate text-3xl font-light leading-tight text-white/95">
+            {condition}
+          </div>
+          <div className="mt-1 text-sm text-white/70">
+            {weather.area ?? 'Nearest forecast area'}
+          </div>
+        </div>
+      </div>
+      <p className="mt-3 text-xs leading-snug text-white/70">
+        {weather.valid_period_text
+          ? `Forecast: ${weather.valid_period_text}`
+          : observed
+            ? `Updated ${observed}`
+            : 'Latest two-hour forecast'}
+      </p>
+    </TileShell>
+  );
 }
 
 export function AirQualityTile({ weather }: WeatherProps) {
@@ -247,6 +289,7 @@ export function AveragesTile({ weather }: WeatherProps) {
 export function TileGrid({ weather }: WeatherProps) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <ConditionTile weather={weather} />
       <AirQualityTile weather={weather} />
       <WindTile weather={weather} />
       <UVTile weather={weather} />

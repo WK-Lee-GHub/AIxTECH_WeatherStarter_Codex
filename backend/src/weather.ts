@@ -1,3 +1,5 @@
+import { logger } from './logger.js';
+
 export class WeatherProviderError extends Error {}
 
 interface ForecastPayload {
@@ -122,6 +124,8 @@ interface TwentyFourHourPayload {
 }
 
 interface FourDayPayload {
+  code?: number;
+  errorMsg?: string;
   items?: Array<{
     update_timestamp?: string;
     timestamp?: string;
@@ -150,9 +154,9 @@ export interface DailyForecast {
 }
 
 export interface WeatherSnapshot {
-  condition: string;
-  observed_at: string;
-  source: string;
+  condition: string | null;
+  observed_at: string | null;
+  source: string | null;
   area: string | null;
   valid_period_text: string | null;
   temperature_c: number | null;
@@ -168,6 +172,8 @@ export interface WeatherSnapshot {
   air_quality_region: string | null;
   forecast_periods: ForecastPeriod[];
   daily_forecast: DailyForecast[];
+  /** Internal refresh metadata; omitted when snapshots are persisted. */
+  failed_metrics?: string[];
 }
 
 export class SingaporeWeatherClient {
@@ -181,10 +187,103 @@ export class SingaporeWeatherClient {
   ) {}
 
   async getCurrentWeather(latitude: number, longitude: number): Promise<WeatherSnapshot> {
-    const forecastPayload = await this.fetchLatestForecastPayload().catch(() => null);
-    return forecastPayload
-      ? this.snapshotFromPayload(forecastPayload, latitude, longitude)
-      : this.emptyForecastSnapshot();
+    let forecastPayload: ForecastPayload;
+    try {
+      forecastPayload = await this.fetchLatestForecastPayload();
+    } catch (error) {
+      logger.warn({ err: error, metric: 'two-hr-forecast' }, 'weather metric refresh failed');
+      return { ...this.emptyForecastSnapshot(), failed_metrics: ['two-hr-forecast'] };
+    }
+
+    const snapshot = this.snapshotFromPayload(forecastPayload, latitude, longitude);
+    const failedMetrics: string[] = [];
+    const [temperature, humidity, rainfall, windSpeed, windDirection, uv, airQuality, forecast24Hour, forecast4Day] =
+      await Promise.all([
+        this.fetchMetric('air-temperature', this.fetchNearestReading('air-temperature', latitude, longitude), {
+          value: null,
+          timestamp: null,
+        }, failedMetrics),
+        this.fetchMetric('relative-humidity', this.fetchNearestReading('relative-humidity', latitude, longitude), {
+          value: null,
+          timestamp: null,
+        }, failedMetrics),
+        this.fetchMetric('rainfall', this.fetchNearestReading('rainfall', latitude, longitude), {
+          value: null,
+          timestamp: null,
+        }, failedMetrics),
+        this.fetchMetric('wind-speed', this.fetchNearestReading('wind-speed', latitude, longitude), {
+          value: null,
+          timestamp: null,
+        }, failedMetrics),
+        this.fetchMetric('wind-direction', this.fetchNearestReading('wind-direction', latitude, longitude), {
+          value: null,
+          timestamp: null,
+        }, failedMetrics),
+        this.fetchMetric('uv', this.fetchUvIndex(), { value: null, timestamp: null }, failedMetrics),
+        this.fetchMetric('air-quality', this.fetchAirQuality(latitude, longitude), {
+          psi: null,
+          pm25: null,
+          region: null,
+          timestamp: null,
+        }, failedMetrics),
+        this.fetchMetric(
+          'twenty-four-hr-forecast',
+          this.fetchTwentyFourHourForecast(latitude, longitude),
+          { low: null, high: null, periods: [], timestamp: null },
+          failedMetrics,
+        ),
+        this.fetchMetric(
+          'four-day-forecast',
+          this.fetchFourDayForecast(),
+          { days: [], timestamp: null },
+          failedMetrics,
+        ),
+      ]);
+
+    return {
+      ...snapshot,
+      observed_at: latestTimestamp([
+        snapshot.observed_at,
+        temperature.timestamp,
+        humidity.timestamp,
+        rainfall.timestamp,
+        windSpeed.timestamp,
+        windDirection.timestamp,
+        uv.timestamp,
+        airQuality.timestamp,
+        forecast24Hour.timestamp,
+        forecast4Day.timestamp,
+      ]) ?? snapshot.observed_at,
+      temperature_c: temperature.value,
+      humidity_percent: humidity.value,
+      rainfall_mm: rainfall.value,
+      wind_speed_knots: windSpeed.value,
+      wind_direction_degrees: windDirection.value,
+      uv_index: uv.value,
+      psi_twenty_four_hourly: airQuality.psi,
+      pm25_one_hourly: airQuality.pm25,
+      air_quality_region: airQuality.region,
+      forecast_low_c: forecast24Hour.low,
+      forecast_high_c: forecast24Hour.high,
+      forecast_periods: forecast24Hour.periods,
+      daily_forecast: forecast4Day.days,
+      failed_metrics: failedMetrics,
+    };
+  }
+
+  private async fetchMetric<T>(
+    metric: string,
+    request: Promise<T>,
+    fallback: T,
+    failedMetrics: string[],
+  ): Promise<T> {
+    try {
+      return await request;
+    } catch (error) {
+      failedMetrics.push(metric);
+      logger.warn({ err: error, metric }, 'weather metric refresh failed');
+      return fallback;
+    }
   }
 
   async fetchLatestForecastPayload(): Promise<ForecastPayload> {
@@ -319,6 +418,11 @@ export class SingaporeWeatherClient {
     const payload = await this.fetchJson<FourDayPayload>(
       `${this.legacyApiBaseUrl()}/v1/environment/4-day-weather-forecast`,
     );
+    if (payload.code !== undefined && payload.code !== 0) {
+      throw new WeatherProviderError(
+        payload.errorMsg ?? 'Weather provider returned a four-day forecast error',
+      );
+    }
     const item = payload.items?.[0];
     return {
       days: (item?.forecasts ?? [])
